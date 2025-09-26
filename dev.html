@@ -1,9 +1,207 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <title>Trang Web Demo</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trần Hào Dev</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+      background-image: radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: rgba(15, 20, 30, 0.95);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+      width: 400px;
+      animation: glow 3s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); }
+      to   { box-shadow: 0 0 35px rgba(0, 255, 255, 0.8); }
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .profile img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 0 20px cyan;
+    }
+
+    .profile h2 {
+      margin: 0;
+      color: cyan;
+      font-weight: 600;
+    }
+
+    .profile h2 i {
+      color: cyan;
+      margin-left: 4px;
+    }
+
+    .profile small {
+      color: #aaa;
+      font-size: 13px;
+    }
+
+    .info {
+      margin-top: 15px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .info div {
+      margin: 6px 0;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border: 1px solid cyan;
+      border-radius: 8px;
+      cursor: pointer;
+      color: cyan;
+      text-decoration: none;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background: cyan;
+      color: #000;
+    }
+
+    .right-card {
+      background: rgba(15, 20, 30, 0.95);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+      width: 300px;
+      animation: glow 3s infinite alternate;
+    }
+
+    .section-title {
+      color: cyan;
+      font-size: 15px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .links {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: 0.3s;
+      color: #fff;
+      font-size: 14px;
+      text-decoration: none;
+      gap: 6px;
+    }
+
+    .link:hover {
+      background: cyan;
+      color: #000;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #aaa;
+    }
+  </style>
 </head>
 <body>
-  <h1>Chào mừng bạn đến với trang web của tôi!</h1>
+  <div class="container">
+    <!-- Left Card -->
+    <div class="card">
+      <div class="profile">
+        <img src="https://i.ibb.co/tMn6dFY/avatar.jpg" alt="Avatar">
+        <div>
+          <h2>Trần Hào Dev <i class="fa-solid fa-circle-check"></i></h2>
+          <small>Coder • Reverse Eng • 0xSec</small>
+        </div>
+      </div>
+      <div class="info">
+        <div><i class="fa-solid fa-location-dot"></i> Hồ Chí Minh, Việt Nam</div>
+        <div><i class="fa-solid fa-phone"></i> 0559705922</div>
+        <div><i class="fa-solid fa-envelope"></i> haohaone1029@gmail.com</div>
+        <div>💻 Developer | Tool | MMO | DarkStack ❤️</div>
+      </div>
+      <div class="buttons">
+        <a href="#" class="btn">LIÊN HỆ</a>
+        <a href="#" class="btn"><i class="fa-solid fa-music"></i> Bật nhạc</a>
+      </div>
+    </div>
+
+    <!-- Right Card -->
+    <div class="right-card">
+      <div class="section-title">Tài nguyên</div>
+      <div class="links">
+        <a class="link" href="#"><i class="fa-brands fa-github"></i> GitHub</a>
+        <a class="link" href="#">Shop Scoure</a>
+        <a class="link" href="#">Nhóm Tele</a>
+      </div>
+      <div class="section-title" style="margin-top:15px;">Theo dõi nhanh</div>
+      <div class="links">
+        <a class="link" href="#"><i class="fa-brands fa-youtube"></i> YouTube</a>
+        <a class="link" href="#"><i class="fa-brands fa-facebook"></i> Facebook</a>
+        <a class="link" href="#"><i class="fa-brands fa-facebook-messenger"></i> Zalo</a>
+        <a class="link" href="#"><i class="fa-solid fa-envelope"></i> Email</a>
+        <a class="link" href="#">Copy Email</a>
+        <a class="link" href="#">Copy Phone</a>
+      </div>
+      <footer>© 2025 • Trần Hào Dev | DarkStack Team</footer>
+    </div>
+  </div>
 </body>
 </html>
