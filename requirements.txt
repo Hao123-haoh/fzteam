@@ -1,3 +1,4 @@
-requests
-beautifulsoup4
-flask
+start - Khởi động bot
+status - Xem mục tiêu đang săn
+san - Săn món mới: /san [tên] [giá]
+pause - Tạm dừng quét
