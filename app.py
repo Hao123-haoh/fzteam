@@ -1,88 +1,127 @@
-import requests
-from bs4 import BeautifulSoup
-import time
+import telebot
+from telebot import types
+from flask import Flask
 import threading
-from flask import Flask, render_template_string
 import os
-import re
+import json
 
-# --- CẤU HÌNH ---
 TOKEN = "6556057870:AAFPx3CJpAcGt-MfKRoAo00SlAEQ26XSS-s"
-CHAT_ID = "6090612274"
-
-target_config = {
-    "item_name": "canxi nano d3",
-    "max_price": 180000,
-    "is_running": True,
-    "last_check": "Chưa có dữ liệu"
-}
-
+ADMIN_ID = 6090612274 
+bot = telebot.TeleBot(TOKEN)
 app = Flask('')
+
+DATA_FILE = "accounts.json"
+
+def load_data():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+def save_data(data):
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
 @app.route('/')
 def home():
-    return f"<h3>Bot TikTok Hunter đang chạy!</h3><p>Mục tiêu: {target_config['item_name']} - Giá: {target_config['max_price']:,}đ</p>"
+    return "🚀 Bot Quản Lý Acc Game đang Online!"
 
-def send_telegram(message):
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "HTML"}
-    try: requests.post(url, json=payload, timeout=10)
-    except: pass
+# --- GIAO DIỆN TIN NHẮN ĐẸP ---
 
-def scrape_tiktok_deals():
-    processed_deals = set()
-    while True:
-        if target_config['is_running']:
-            try:
-                target_config['last_check'] = time.strftime("%H:%M:%S")
-                res = requests.get("https://bloggiamgia.vn/tiktok-shop", headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-                soup = BeautifulSoup(res.text, 'html.parser')
-                items = soup.find_all(['h3', 'div'], class_=['coupon-title', 'deal-info'])
-                for item in items:
-                    title = item.text.strip().lower()
-                    if target_config['item_name'].lower() in title:
-                        nums = re.findall(r'\d+', title.replace('.', '').replace(',', ''))
-                        if nums:
-                            price = int(nums[0])
-                            if 'k' in title and price < 1000: price *= 1000
-                            if price <= target_config['max_price'] and title not in processed_deals:
-                                send_telegram(f"<b>🎯 ĐÃ TÌM THẤY DEAL:</b>\n\n📦 {item.text.strip()}\n💰 Giá: {price:,}đ")
-                                processed_deals.add(title)
-            except: pass
-        time.sleep(300)
+@bot.message_handler(commands=['start'])
+def welcome(message):
+    if message.chat.id != ADMIN_ID: return
+    
+    # Tạo nút bấm Inline (nút dưới tin nhắn)
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    btn1 = types.InlineKeyboardButton("➕ Thêm Acc", callback_data="add_prompt")
+    btn2 = types.InlineKeyboardButton("📋 Danh Sách", callback_data="list_accs")
+    btn3 = types.InlineKeyboardButton("🔍 Tìm Kiếm", callback_data="search_prompt")
+    btn4 = types.InlineKeyboardButton("⚙️ Hướng Dẫn", callback_data="help")
+    markup.add(btn1, btn2, btn3, btn4)
 
-# XỬ LÝ LỆNH MENU TELEGRAM
-def handle_commands():
-    last_id = 0
-    while True:
-        try:
-            url = f"https://api.telegram.org/bot{TOKEN}/getUpdates?offset={last_id + 1}&timeout=20"
-            res = requests.get(url, timeout=25).json()
-            for up in res.get("result", []):
-                last_id = up["update_id"]
-                if "message" not in up or "text" not in up["message"]: continue
-                
-                txt = up["message"]["text"].lower().strip()
-                
-                if txt == "/status":
-                    send_telegram(f"📊 <b>TRẠNG THÁI:</b>\n- Đang săn: {target_config['item_name']}\n- Giá dưới: {target_config['max_price']:,}đ")
-                
-                elif txt.startswith("/san"):
-                    # Tách tên và giá (Hỗ trợ tên có dấu cách như Canxi Nano D3)
-                    parts = txt.replace("/san", "").strip().split()
-                    if len(parts) >= 2:
-                        try:
-                            price = int(parts[-1]) # Lấy số cuối cùng làm giá
-                            item = " ".join(parts[:-1]) # Phần còn lại là tên
-                            target_config["item_name"] = item
-                            target_config["max_price"] = price
-                            send_telegram(f"✅ <b>Đã nhận lệnh săn:</b>\n📦 {item}\n💰 Dưới {price:,}đ")
-                        except:
-                            send_telegram("⚠️ Lỗi: Giá phải là số. VD: /san canxi 180000")
-        except: pass
-        time.sleep(2)
+    welcome_msg = (
+        "<b>╔════════════════╗</b>\n"
+        "<b>    🎮 GAME ACCOUNT MANAGER    </b>\n"
+        "<b>╚════════════════╝</b>\n\n"
+        "👋 Chào mừng <b>Master</b> quay trở lại!\n"
+        "Hệ thống lưu trữ đã sẵn sàng phục vụ."
+    )
+    bot.send_message(message.chat.id, welcome_msg, parse_mode='HTML', reply_markup=markup)
+
+# Xử lý khi nhấn nút
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    if call.data == "add_prompt":
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "📝 <b>Nhập theo cú pháp:</b>\n<code>/add [tên game] [user] [pass]</code>", parse_mode='HTML')
+    
+    elif call.data == "list_accs":
+        data = load_data()
+        if not data:
+            bot.answer_callback_query(call.id, "Kho trống!")
+            return
+        
+        res = "📋 <b>DANH SÁCH TÀI KHOẢN</b>\n"
+        res += "────────────────────\n"
+        for i, a in enumerate(data):
+            res += f"📌 {i+1}. <b>{a['game']}</b> | 👤 <code>{a['user']}</code>\n"
+        
+        # Thêm nút làm mới
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("🔄 Làm mới", callback_data="list_accs"))
+        bot.edit_message_text(res, call.message.chat.id, call.message.message_id, parse_mode='HTML', reply_markup=markup)
+
+    elif call.data == "search_prompt":
+        bot.send_message(call.message.chat.id, "🔍 <b>Nhập:</b> <code>/find [tên game]</code>", parse_mode='HTML')
+
+# Lệnh Add đẹp hơn
+@bot.message_handler(commands=['add'])
+def add_process(message):
+    if message.chat.id != ADMIN_ID: return
+    try:
+        parts = message.text.split()
+        new_acc = {"game": parts[1].upper(), "user": parts[2], "pass": parts[3]}
+        data = load_data()
+        data.append(new_acc)
+        save_data(data)
+        
+        success_msg = (
+            "✅ <b>THÊM THÀNH CÔNG</b>\n"
+            "────────────────────\n"
+            f"🎮 Game: <b>{parts[1].upper()}</b>\n"
+            f"👤 User: <code>{parts[2]}</code>\n"
+            "────────────────────\n"
+            "<i>Dữ liệu đã được mã hóa và lưu trữ.</i>"
+        )
+        bot.send_message(message.chat.id, success_msg, parse_mode='HTML')
+    except:
+        bot.reply_to(message, "❌ <b>Lỗi!</b> Sai cú pháp rồi Master ơi.")
+
+# Lệnh Find đẹp hơn
+@bot.message_handler(commands=['find'])
+def find_process(message):
+    game_name = message.text.replace("/find", "").strip().upper()
+    data = load_data()
+    results = [a for a in data if game_name in a['game']]
+    
+    if results:
+        for a in results:
+            find_msg = (
+                f"✨ <b>KẾT QUẢ TÌM KIẾM: {a['game']}</b>\n"
+                "────────────────────\n"
+                f"👤 Tài khoản: <code>{a['user']}</code>\n"
+                f"🔑 Mật khẩu:  <code>{a['pass']}</code>\n"
+                "────────────────────\n"
+                "<i>(Chạm vào User hoặc Pass để sao chép)</i>"
+            )
+            bot.send_message(message.chat.id, find_msg, parse_mode='HTML')
+    else:
+        bot.send_message(message.chat.id, "❌ <b>Không tìm thấy!</b> Vui lòng kiểm tra lại tên game.")
+
+def run_bot():
+    bot.polling(none_stop=True)
 
 if __name__ == "__main__":
-    threading.Thread(target=scrape_tiktok_deals, daemon=True).start()
-    threading.Thread(target=handle_commands, daemon=True).start()
+    threading.Thread(target=run_bot).start()
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
