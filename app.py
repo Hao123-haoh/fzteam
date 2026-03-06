@@ -4,16 +4,16 @@ from flask import Flask
 import threading
 import os
 import json
+import time
 
 # --- CẤU HÌNH ---
 TOKEN = "6556057870:AAFPx3CJpAcGt-MfKRoAo00SlAEQ26XSS-s"
 ADMIN_ID = 6090612274 
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot(TOKEN, threaded=False)
 app = Flask('')
 
 DATA_FILE = "accounts.json"
 
-# --- HÀM HỖ TRỢ DỮ LIỆU ---
 def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -26,17 +26,17 @@ def save_data(data):
 
 @app.route('/')
 def home():
-    return "🚀 Game Manager Bot is Online!"
+    return "🌐 Premium Account Manager with Image Support is Online!"
 
-# --- THIẾT KẾ GIAO DIỆN TIN NHẮN ---
+# --- GIAO DIỆN PREMIUM ---
 
-def get_main_menu():
+def main_menu():
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
-        types.InlineKeyboardButton("➕ Thêm Acc", callback_data="add"),
-        types.InlineKeyboardButton("📋 Danh Sách", callback_data="list"),
-        types.InlineKeyboardButton("🔍 Tìm Kiếm", callback_data="search"),
-        types.InlineKeyboardButton("🗑️ Xóa Acc", callback_data="delete")
+        types.InlineKeyboardButton("➕ THÊM ACC + 📸", callback_data="add_guide"),
+        types.InlineKeyboardButton("📋 KHO ACC", callback_data="list"),
+        types.InlineKeyboardButton("🔍 TÌM KIẾM", callback_data="search"),
+        types.InlineKeyboardButton("⚙️ HỆ THỐNG", callback_data="sys")
     )
     return markup
 
@@ -45,72 +45,40 @@ def welcome(message):
     if message.chat.id != ADMIN_ID: return
     
     welcome_text = (
-        "<b>╔════════════════════╗</b>\n"
-        "<b>    🎮 QUẢN LÝ TÀI KHOẢN GAME    </b>\n"
-        "<b>╚════════════════════╝</b>\n\n"
-        "👋 Chào mừng Master <b>Hảo</b>!\n"
-        "Hệ thống lưu trữ đã sẵn sàng phục vụ.\n"
-        "<i>Vui lòng chọn chức năng dưới đây:</i>"
+        "<b>◈━━━━━━━ CONFIG ━━━━━━━◈</b>\n"
+        "<b>   🤖 PREMIUM ACCOUNT MANAGER   </b>\n"
+        "<b>◈━━━━━━━━━━━━━━━━━━━━━◈</b>\n\n"
+        "👋 Chào mừng <b>Master Hảo</b>,\n"
+        "Hệ thống đã sẵn sàng lưu trữ Media.\n\n"
+        "📊 <i>Status: Running 🟢</i>\n"
+        "🖼 <i>Media Support: Active ✅</i>"
     )
-    bot.send_message(message.chat.id, welcome_text, parse_mode='HTML', reply_markup=get_main_menu())
+    bot.send_message(message.chat.id, welcome_text, parse_mode='HTML', reply_markup=main_menu())
 
-# Xử lý các nút bấm Inline
-@bot.callback_query_handler(func=lambda call: True)
-def handle_query(call):
-    bot.answer_callback_query(call.id)
-    
-    if call.data == "add":
-        msg = "📝 <b>Gửi thông tin theo mẫu:</b>\n<code>/add [tên game] [user] [pass]</code>"
-        bot.send_message(call.message.chat.id, msg, parse_mode='HTML')
-        
-    elif call.data == "list":
-        data = load_data()
-        if not data:
-            bot.send_message(call.message.chat.id, "📭 <b>Kho trống!</b> Hãy thêm acc trước.")
-            return
-        
-        res = "<b>📋 DANH SÁCH TÀI KHOẢN HIỆN CÓ</b>\n"
-        res += "━━━━━━━━━━━━━━━━━━\n"
-        for i, a in enumerate(data):
-            res += f"📌 {i+1}. <b>{a['game']}</b> | 👤 <code>{a['user']}</code>\n"
-        
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🔙 Quay lại", callback_data="start_over"))
-        bot.edit_message_text(res, call.message.chat.id, call.message.message_id, parse_mode='HTML', reply_markup=markup)
-
-    elif call.data == "search":
-        bot.send_message(call.message.chat.id, "🔍 <b>Nhập lệnh:</b> <code>/find [tên game]</code>", parse_mode='HTML')
-
-    elif call.data == "start_over":
-        welcome(call.message)
-
-# Lệnh Add với tin nhắn phản hồi đẹp
-@bot.message_handler(commands=['add'])
-def process_add(message):
+# Xử lý lệnh thêm Acc kèm Ảnh
+@bot.message_handler(content_types=['photo'])
+def handle_photo_add(message):
     if message.chat.id != ADMIN_ID: return
-    try:
-        parts = message.text.split()
-        game, user, pwd = parts[1].upper(), parts[2], parts[3]
-        
-        data = load_data()
-        data.append({"game": game, "user": user, "pass": pwd})
-        save_data(data)
-        
-        success_msg = (
-            "✅ <b>THÊM THÀNH CÔNG!</b>\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            f"🎮 Game: <b>{game}</b>\n"
-            f"👤 User: <code>{user}</code>\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "<i>Dữ liệu đã được lưu trữ an toàn.</i>"
-        )
-        bot.send_message(message.chat.id, success_msg, parse_mode='HTML', reply_markup=get_main_menu())
-    except:
-        bot.reply_to(message, "❌ <b>Lỗi!</b> Cú pháp đúng: /add game user pass")
+    if message.caption and message.caption.startswith('/add'):
+        try:
+            # Cú pháp: /add [Game] [User] [Pass] (viết trong phần chú thích ảnh)
+            parts = message.caption.split()
+            game, user, pwd = parts[1].upper(), parts[2], parts[3]
+            
+            # Lấy file_id của ảnh để lưu
+            file_id = message.photo[-1].file_id
+            
+            data = load_data()
+            data.append({"game": game, "user": user, "pass": pwd, "image": file_id})
+            save_data(data)
+            
+            bot.reply_to(message, f"✅ <b>ĐÃ LƯU: {game}</b>\n(Kèm hình ảnh minh họa)", parse_mode='HTML')
+        except:
+            bot.reply_to(message, "⚠️ <b>LỖI:</b> Hãy ghi chú thích ảnh theo mẫu:\n<code>/add Game User Pass</code>", parse_mode='HTML')
 
-# Lệnh Find với định dạng copy nhanh
+# Xử lý tìm kiếm và hiển thị ảnh
 @bot.message_handler(commands=['find'])
-def process_find(message):
+def find_acc(message):
     if message.chat.id != ADMIN_ID: return
     game_search = message.text.replace("/find", "").strip().upper()
     data = load_data()
@@ -118,23 +86,41 @@ def process_find(message):
     
     if results:
         for a in results:
-            find_res = (
-                f"✨ <b>KẾT QUẢ: {a['game']}</b>\n"
+            info = (
+                f"🎮 <b>GAME: {a['game']}</b>\n"
                 "━━━━━━━━━━━━━━━━━━\n"
-                f"👤 Tài khoản: <code>{a['user']}</code>\n"
-                f"🔑 Mật khẩu:  <code>{a['pass']}</code>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                "<i>(Chạm vào nội dung để Copy nhanh)</i>"
+                f"👤 User: <code>{a['user']}</code>\n"
+                f"🔑 Pass: <code>{a['pass']}</code>\n"
+                "━━━━━━━━━━━━━━━━━━"
             )
-            bot.send_message(message.chat.id, find_res, parse_mode='HTML')
+            if "image" in a and a['image']:
+                bot.send_photo(message.chat.id, a['image'], caption=info, parse_mode='HTML')
+            else:
+                bot.send_message(message.chat.id, info, parse_mode='HTML')
     else:
-        bot.send_message(message.chat.id, "❌ <b>Không tìm thấy!</b> Vui lòng kiểm tra lại tên game.")
+        bot.send_message(message.chat.id, "❌ Không tìm thấy!")
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_handler(call):
+    if call.data == "add_guide":
+        msg = "📸 <b>CÁCH THÊM ACC CÓ ẢNH:</b>\n\n1. Chọn ảnh muốn gửi.\n2. Ở phần <b>'Thêm chú thích'</b>, gõ:\n<code>/add Game User Pass</code>\n3. Nhấn gửi!"
+        bot.send_message(call.message.chat.id, msg, parse_mode='HTML')
+    elif call.data == "list":
+        data = load_data()
+        res = "📋 <b>DANH SÁCH ACC:</b>\n"
+        for i, a in enumerate(data):
+            res += f"{i+1}. <b>{a['game']}</b> - <code>{a['user']}</code>\n"
+        bot.send_message(call.message.chat.id, res, parse_mode='HTML')
+    bot.answer_callback_query(call.id)
 
 def run_bot():
-    bot.polling(none_stop=True)
+    while True:
+        try:
+            bot.polling(none_stop=True, interval=1, timeout=20)
+        except Exception:
+            time.sleep(5)
 
 if __name__ == "__main__":
-    # Khởi động Bot trong luồng riêng
     threading.Thread(target=run_bot).start()
-    # Chạy Flask Server trên cổng Render cung cấp
+    # Tự động nhận diện Port trên Render
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
